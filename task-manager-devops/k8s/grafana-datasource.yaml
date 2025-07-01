@@ -1,0 +1,6 @@
+apiVersion: 1 
+datasources: 
+  - name: prometheus
+    type: postgres
+    access: proxy 
+    url: http://prometheus:9000
