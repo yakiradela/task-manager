@@ -13,18 +13,21 @@ module "vpc" {
 
 module "eks" {
   source          = "terraform-aws-modules/eks/aws"
-  version         = "16.0.0"  # לדוגמה
+  version         = "18.29.0"
 
   cluster_name    = var.cluster_name
-  cluster_version = "1.21"
+  cluster_version = "1.27"
 
   vpc_id          = module.vpc.vpc_id
   subnet_ids      = module.vpc.private_subnets
 
-  worker_groups = [
-    {
+  node_groups = {
+    default = {
+      desired_capacity = 2
+      max_capacity     = 3
+      min_capacity     = 1
+
       instance_type = "t3.medium"
-      asg_desired_capacity = 2
     }
-  ]
+  }
 }
