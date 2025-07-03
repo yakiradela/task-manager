@@ -1,4 +1,4 @@
-name: CI/CD Pipeline to AWS EKS
+name: CI/CD Pipeline with Terraform + EKS Deploy
 
 on:
   push:
@@ -10,6 +10,7 @@ env:
   ECR_REPOSITORY: task-api
   EKS_CLUSTER_NAME: task-cluster
   IMAGE_TAG: latest
+  TERRAFORM_WORKING_DIR: infra
 
 jobs:
   deploy:
@@ -25,6 +26,19 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.6
+
+    - name: Terraform Init
+      working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+      run: terraform init
+
+    - name: Terraform Apply
+      working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+      run: terraform apply -auto-approve
 
     - name: Install kubectl
       run: |
