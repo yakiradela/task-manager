@@ -1,0 +1,68 @@
+name: CI/CD Pipeline to AWS EKS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: task-api
+  EKS_CLUSTER_NAME: task-cluster
+  IMAGE_TAG: latest
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Install AWS CLI v2
+      run: |
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install
+
+    - name: Install kubectl
+      run: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        sudo mv kubectl /usr/local/bin/
+
+    - name: Install eksctl
+      run: |
+        curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+        sudo mv /tmp/eksctl /usr/local/bin
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      run: |
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com
+
+    - name: Build and push Docker image
+      run: |
+        IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:$IMAGE_TAG
+        docker build -t $IMAGE_URI .
+        docker push $IMAGE_URI
+
+    - name: Update kubeconfig
+      run: |
+        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+
+    - name: Deploy to EKS with eksctl and kubectl
+      run: |
+        eksctl create manifest -f k8s/app-deployment.yaml | kubectl apply -f -
+        eksctl create manifest -f k8s/app-service.yaml | kubectl apply -f -
+        eksctl create manifest -f k8s/postgres-deployment.yaml | kubectl apply -f -
+        eksctl create manifest -f k8s/postgres-service.yaml | kubectl apply -f -
+        eksctl create manifest -f k8s/secret.yaml | kubectl apply -f -
+        eksctl create manifest -f k8s/configmap.yaml | kubectl apply -f -
