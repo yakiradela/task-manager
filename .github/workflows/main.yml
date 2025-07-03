@@ -10,7 +10,7 @@ env:
   ECR_REPOSITORY: task-api
   EKS_CLUSTER_NAME: task-cluster
   IMAGE_TAG: latest
-  TERRAFORM_WORKING_DIR: infra
+  TERRAFORM_WORKING_DIR: task-manager-devops/infra
 
 jobs:
   deploy:
