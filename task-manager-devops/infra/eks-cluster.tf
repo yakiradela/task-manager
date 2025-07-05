@@ -11,8 +11,8 @@ module "vpc" {
 }
 
 module "eks" {
-  source          = "terraform-aws-modules/eks/aws"
-  version         = "20.8.4"
+  source  = "terraform-aws-modules/eks/aws"
+  version = "20.8.4"
 
   cluster_name    = var.cluster_name
   cluster_version = "1.29"
@@ -20,30 +20,19 @@ module "eks" {
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
 
-  # לא מגדירים node_groups פה
-}
+  eks_managed_node_groups = {
+    dev_nodes = {
+      desired_size = 2
+      max_size     = 3
+      min_size     = 1
 
-module "eks_managed_node_group" {
-  source = "terraform-aws-modules/eks/aws//modules/eks-managed-node-group"
-  version = "20.8.4"
+      instance_types = ["t3.medium"]
+      capacity_type  = "ON_DEMAND"
 
-  cluster_name    = module.eks.cluster_id
-  cluster_version = "1.27"
-
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
-
-  cluster_primary_security_group_id = module.eks.cluster_primary_security_group_id
-  cluster_security_group_id         = module.eks.node_security_group_id
-
-  min_size     = 1
-  max_size     = 3
-  desired_size = 2
-
-  instance_types = ["t3.medium"]
-  capacity_type  = "ON_DEMAND"
-
-  labels = {
-    Environment = "dev"
+      labels = {
+        Environment = "dev"
+      }
+    }
   }
 }
+
