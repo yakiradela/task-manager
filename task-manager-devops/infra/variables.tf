@@ -1,5 +1,7 @@
 variable "cluster_name" {
-    default = "task-cluster"
+  description = "Name of the EKS cluster"
+  type        = string
+  default     = "task-cluster"
 }
 
 
