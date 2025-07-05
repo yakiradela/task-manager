@@ -25,7 +25,7 @@ module "eks" {
 
 module "eks_managed_node_group" {
   source = "terraform-aws-modules/eks/aws//modules/eks-managed-node-group"
-  version = "18.29.0"
+  version = "20.8.4"
 
   cluster_name    = module.eks.cluster_id
   cluster_version = "1.27"
