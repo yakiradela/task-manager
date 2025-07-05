@@ -1,6 +1,6 @@
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "3.14.2"
+  version = "5.1.0"
 
   name               = "task-vpc"
   cidr               = "10.0.0.0/16"
